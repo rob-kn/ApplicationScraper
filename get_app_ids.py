@@ -8,16 +8,21 @@ def get_app_categories(raw_html):
     html = BeautifulSoup(raw_html, 'html.parser')
     for a in html.select('a'):
         # Ignore 'Games' and 'Family' section of dropdown
-        if a['href'].startswith("/store/apps/category/") and \
-                not a['href'].startswith("/store/apps/category/GAME") and \
-                not a['href'].startswith("/store/apps/category/FAMILY"):
+        # if a['href'].startswith("/store/apps/category/") and \
+        #         not a['href'].startswith("/store/apps/category/GAME") and \
+        #         not a['href'].startswith("/store/apps/category/FAMILY"):
+        #     categories.append(a['href'])
+
+        # Only 'Games' and 'Family' section of dropdown
+        if a['href'].startswith("/store/apps/category/GAME") or \
+                a['href'].startswith("/store/apps/category/FAMILY"):
             categories.append(a['href'])
     return categories
 
 
 def get_sub_categorys(url):
     sub_categories = {}
-    raw_html = simple_get(url)
+    raw_html = simple_get(url, use_proxies=False)
     html = BeautifulSoup(raw_html, 'html.parser')
     data = html.findAll('h2')
     for h2 in data:
@@ -32,7 +37,7 @@ def get_sub_categorys(url):
 
 def get_apps_on_page(url):
     app_ids = set()
-    raw_html = simple_get(url)
+    raw_html = simple_get(url, use_proxies=False)
     soup = BeautifulSoup(raw_html, 'html.parser')
     for a in soup.select('a'):
         signature = "/store/apps/details?id="
@@ -47,7 +52,7 @@ if __name__ == "__main__":
 
     # get main categories
     app_store_page = main_page_url + "/store/apps"
-    raw_html = simple_get(app_store_page)
+    raw_html = simple_get(app_store_page, use_proxies=False)
     categories = get_app_categories(raw_html)
     pprint(categories)
 
@@ -70,7 +75,7 @@ if __name__ == "__main__":
             app_ids_on_page = get_apps_on_page(sc_url)
             all_app_ids = all_app_ids.union(app_ids_on_page)
 
-    with open('app_ids.txt', 'w') as f:
+    with open('app_ids_games_and_family.txt', 'w') as f:
         for indx, app_id in enumerate(all_app_ids):
             if indx == 0:
                 f.write(app_id)

@@ -7,7 +7,7 @@ from get_url import simple_get
 
 
 def get_app_details(app_id):
-    print("Getting details for app with id '{}'".format(app_id))
+    # print("Getting details for app with id '{}'".format(app_id))
     details = {}
     app_page_url = "https://play.google.com/store/apps/details?id=" + app_id + "&hl=en_GB"
     raw_html = simple_get(app_page_url)
@@ -21,6 +21,8 @@ def get_app_details(app_id):
     desc = soup.find("div", {"itemprop": "description"}).text
     desc = desc.replace('<br>', '\n')
     details['description'] = desc.strip()
+    score = soup.find("div", {"class": "score"})
+    details['score'] = score.text.strip() if score else None
 
     meta_info = soup.findAll("div", {"class": "meta-info"})
     for info in meta_info:
@@ -28,7 +30,8 @@ def get_app_details(app_id):
         info_content = info.find(attrs={"class": "content"}).text
         details[info_title.strip()] = info_content.strip()
 
-    pprint(details)
+    # pprint(details)
+    print("App details retrieved for app with id '{}'".format(app_id))
 
     return app_id, details
 
@@ -56,17 +59,11 @@ def get_app_ids(max_count):
     print("Retrieving a maximun of {} app_ids".format(max_count))
     with open('apps.json') as apps_json:
         json_content = json.load(apps_json)
-    with open('app_ids.txt') as ids_file:
-        app_ids = [app_id.strip() for app_id in ids_file if app_id.strip()]
     new_ids = []
-    for app_id in app_ids:
-        if app_id not in json_content:
+    for app_id in json_content.keys():
+        if not json_content[app_id]:
             new_ids.append(app_id)
-            print("App id '{}' not in current json and has been returned.".format(app_id))
-        else:
-            if not json_content[app_id]:
-                new_ids.append(app_id)
-                print("App id '{}' contains no information in current json and has been returned.".format(app_id))
+            print("App id '{}' contains no information in current json and has been returned.".format(app_id))
         if len(new_ids) == max_count:
             break
     return new_ids
@@ -74,5 +71,15 @@ def get_app_ids(max_count):
 
 if __name__ == "__main__":
     # get multiple app info
-    app_ids = get_app_ids(15)
-    get_many_app_details(app_ids)
+    for i in range(3):
+        app_ids = get_app_ids(400)
+        get_many_app_details(app_ids)
+
+    with open('apps.json') as a:
+        apps = json.load(a)
+        detailed = 0
+        for pkg in apps.keys():
+            if apps[pkg]:
+                detailed += 1
+    print("JSON contains {} packages, {} with information.".format(len(apps.keys()), detailed))
+

@@ -1,16 +1,30 @@
 from requests import get
 from requests.exceptions import RequestException
 from contextlib import closing
+from random import randint
 
 
-def simple_get(url):
+def simple_get(url, use_proxies=True):
     """
     Attempts to get the content at `url` by making an HTTP GET request.
     If the content-type of response is some kind of HTML/XML, return the
     text content, otherwise return None
     """
+    if use_proxies:
+        proxy_num = randint(0, 11)
+        with open('fast_proxies.txt') as prox:
+            for indx, line in enumerate(prox):
+                if indx == proxy_num:
+                    fields = line.split('\t')
+                    https_proxy = "https://{}:{}".format(fields[0].strip(), fields[1].strip())
+                    print("Getting '{}' using proxy '{}:{}'".format(url, fields[0].strip(), fields[1].strip()))
+        proxy_dict = {
+            "https": https_proxy
+        }
+    else:
+        proxy_dict = {}
     try:
-        with closing(get(url, stream=True)) as resp:
+        with closing(get(url, stream=True, timeout=10, proxies=proxy_dict)) as resp:
             if is_good_response(resp):
                 return resp.content
             else:
